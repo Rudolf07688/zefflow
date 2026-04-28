@@ -27,6 +27,10 @@ class AppConfig(BaseSettings):
         "postgres",
         description="Postgres hostname as seen from n8n. Use the docker-compose service name, not localhost.",
     )
+    postgres_host: str = Field(
+        "localhost",
+        description="Postgres hostname for local Python scripts (uses the mapped port, not the Docker network).",
+    )
     db_postgresdb_port: int = Field(5432, description="Postgres TCP port.")
     db_postgresdb_database: str = Field("n8n", description="Database name n8n connects to (usually == POSTGRES_DB).")
     db_postgresdb_user: str = Field("n8n", description="Postgres user n8n authenticates as (usually == POSTGRES_USER).")
