@@ -225,6 +225,10 @@ def refresh(
         return
 
     console.print(f"updated docs: [bold]{', '.join(out.get('applied') or [])}[/bold]")
+    if out.get("skipped"):
+        console.print(
+            f"[yellow]skipped (out of scope):[/yellow] {', '.join(out['skipped'])}"
+        )
     console.print(f"post-check clean: [bold]{out.get('post_check_clean')}[/bold]")
     console.print(
         "[yellow]Review changes, then commit:[/yellow]\n"

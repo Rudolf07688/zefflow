@@ -184,6 +184,7 @@ Dashed = aspirational / not yet wired.
 | [src/zefflow/config/app_config.py](../../src/zefflow/config/app_config.py) | Single source of truth for env vars (Postgres, n8n, Ollama, GCP) | ✅ |
 | [src/zefflow/db/db_models.py](../../src/zefflow/db/db_models.py) | SQLAlchemy ORM for a chatbot-style schema (users, conversations, tool_calls, …) | ✅ but unrelated to Rails |
 | [src/zefflow/scripts/](../../src/zefflow/scripts/) | `compose-up` and `db` Typer/argparse CLIs | ✅ |
+| [agents/](../../src/zefflow/agents/) | **Empty** (only `__init__.py`). |
 | [agent-workflows/](../../agent-workflows/) | Agno + Gemini agent runtime, separate uv project | scaffold |
 | [agent-workflows/src/agent_workflows/workflows/](../../agent-workflows/src/agent_workflows/workflows/) | `BaseWorkflow`, `registry`, `daily_db_report` demo, `repo_map_refresh`, `repo_map_init` | ✅ scaffold |
 | [agent-workflows/src/agent_workflows/agents/](../../agent-workflows/src/agent_workflows/agents/) | `BaseAgent`, `DbInspectorAgent`, `ReporterAgent` | ✅ scaffold |
@@ -241,4 +242,4 @@ See [05-open-questions.md](05-open-questions.md). Highlights:
 
 
 ---
-*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `2d987c3` on 2026-05-03.*

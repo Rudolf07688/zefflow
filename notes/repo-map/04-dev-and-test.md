@@ -47,6 +47,10 @@ This invokes the `agent-workflows/scripts/agent_refresh.py` CLI via the top-leve
 cd agent-workflows
 uv run agent-refresh init      # full first-time scan + write all repo-map docs (requires LLM)
 cd .. # back to repo root
+# To re-apply the last agent output without an LLM call:
+cd agent-workflows
+uv run agent-refresh refresh --from-cache
+cd .. # back to repo root
 # Then for subsequent checks/updates (from repo root):
 make repo-map-check            # detect staleness, no LLM call
 make repo-map-status           # show detailed diff (requires LLM)
@@ -74,4 +78,4 @@ The root `zefflow` package has **no tests**.
 
 
 ---
-*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `2d987c3` on 2026-05-03.*

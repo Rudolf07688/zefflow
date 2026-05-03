@@ -70,7 +70,7 @@ flowchart LR
 |---|---|---|
 | `run-workflow` | [`scripts.run_workflow:app`](../../agent-workflows/scripts/run_workflow.py) | Typer + rich UI. Runs a registered workflow, pretty-prints status + duration, renders the markdown `report` if present. |
 | `seed-db` | [`scripts.seed_db:app`](../../agent-workflows/scripts/seed_db.py) | `init_db()`, then LLM-generates customers / products / orders and `seed_table()`s them. |
-| `agent-refresh` | [`scripts.agent_refresh:app`](../../agent-workflows/scripts/agent_refresh.py) | Typer CLI: check, status, init, refresh; bare `agent-refresh` runs check then offers refresh. |
+| `agent-refresh` | [`scripts.agent_refresh:app`](../../agent-workflows/scripts/agent_refresh.py) | Typer CLI: check, status, init, refresh (with `--from-cache` option); bare `agent-refresh` runs check then offers refresh. |
 
 ## Tests
 
@@ -81,7 +81,7 @@ flowchart LR
 - The package was successfully moved from `src/agent-workflows/` to `agent-workflows/` and this location is now stable.
 - Strict mypy + ruff configured (`pyproject.toml`). The `pyproject.toml` now correctly packages `scripts/`.
 - `agno` is unpinned (`>=1.1.0`); see `tickets.json` TICKET-2 — version drift is a known risk.
-- `config.py` now uses a lazy settings proxy, allowing no-LLM CLI subcommands (`agent-refresh check`) to run without `GOOGLE_API_KEY` being present in the environment.
+- `config.py` now uses a lazy settings proxy, allowing no-LLM `agent-refresh` commands (like `check` or `status`) to run without `GOOGLE_API_KEY` being present in the environment.
 - Provider-agnostic by design: flip `LLM_PROVIDER` between `gemini` (API key) and `vertex` (ADC + project).
 
 ## What it does *not* do (yet)
@@ -92,4 +92,4 @@ flowchart LR
 
 
 ---
-*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `2d987c3` on 2026-05-03.*

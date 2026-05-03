@@ -41,7 +41,7 @@
 
 ## What I'd add to the methodology
 
--   A formal **"signals dictionary"** for guessing trajectory on early-stage repos. Tier signals: `tickets.json/issues > unchecked checklists in notes/ > declared-but-unused deps > naming > commit messages > READMEs`. Tickets/issues beat README aspirations because they're concretely scheduled.
+-   A formal **"signals dictionary"** for guessing trajectory on early-stage repos. Tier signals: `tickets.json/issues > unchecked checklists in notes/ > declared-but-unused deps > naming > commit messages > READMEs`.
 -   A **`grep`-based dep↔import script** the agent runs once per detected `pyproject.toml`, producing a histogram and a "declared, never imported" list.
 -   **Workspace-tree distrust:** the agent's first action should be a `git ls-files | head -200` + `git status --short` to ground-truth what's tracked vs. uncommitted vs. dropped from the IDE's view.
 
@@ -84,4 +84,4 @@ phase 4  Self-review  ◄──────────────────�
 
 
 ---
-*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `2d987c3` on 2026-05-03.*

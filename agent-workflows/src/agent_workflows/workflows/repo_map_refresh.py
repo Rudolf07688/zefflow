@@ -234,6 +234,10 @@ class RepoMapRefreshAgent(BaseAgent):
         "  9. Output ONLY a single raw JSON object. NO markdown fences. NO commentary before or after.",
         " 10. `filename` must be a BASENAME only (e.g. '00-overview.md'). Never include 'notes/repo-map/'.",
         " 11. Keys in `new_files_cited` must also be basenames matching `filename`s above.",
+        " 12. Allowed `filename` values are EXACTLY: 00-overview.md, 01-stack-and-services.md,",
+        "     02-python-zefflow.md, 03-python-agent-workflows.md, 04-dev-and-test.md,",
+        "     05-open-questions.md, debrief.md. Never propose patches to changes.md, README.md,",
+        "     repo_overwiew.md, AGENTS.md, or any other file — those are out of scope.",
     ]
 
 
@@ -307,6 +311,7 @@ class RepoMapRefreshWorkflow(BaseWorkflow):
 
         # Apply (with allowlist + lint guardrails).
         applied: list[str] = []
+        skipped: list[str] = []
         repo_map_dir = (root / REPO_MAP_DIR_REL).resolve()
         for patch in plan.patches:
             # Normalise: agents sometimes return 'notes/repo-map/foo.md' or
@@ -314,10 +319,14 @@ class RepoMapRefreshWorkflow(BaseWorkflow):
             requested = patch.filename.strip().lstrip("./")
             basename = Path(requested).name
             if basename not in ALLOWED_DOCS:
-                raise PermissionError(
-                    f"agent tried to write disallowed file: {patch.filename!r} "
-                    f"(basename {basename!r} not in allowlist)"
+                # The agent occasionally proposes patches to non-allowlisted
+                # files (e.g. notes/changes.md). Skip — never write — and log.
+                log.warning(
+                    "repo_map_refresh.skip_disallowed",
+                    filename=patch.filename, basename=basename,
                 )
+                skipped.append(basename)
+                continue
             target = (repo_map_dir / basename).resolve()
             if repo_map_dir not in target.parents:
                 raise PermissionError(
@@ -367,9 +376,11 @@ class RepoMapRefreshWorkflow(BaseWorkflow):
             "last_sha": last_sha,
             "head_sha": head_sha,
             "applied": applied,
+            "skipped": skipped,
             "unchanged": plan.docs_unchanged,
             "post_check_clean": clean,
         }
+
 
 def apply_cached_plan(raw_text: str) -> dict[str, Any]:
     """Re-apply a saved agent response without calling the LLM.
@@ -400,10 +411,11 @@ def apply_cached_plan(raw_text: str) -> dict[str, Any]:
         requested = patch.filename.strip().lstrip("./")
         basename = Path(requested).name
         if basename not in ALLOWED_DOCS:
-            raise PermissionError(
-                f"agent tried to write disallowed file: {patch.filename!r} "
-                f"(basename {basename!r} not in allowlist)"
+            log.warning(
+                "apply_cached_plan.skip_disallowed",
+                filename=patch.filename, basename=basename,
             )
+            continue
         target = (repo_map_dir / basename).resolve()
         if repo_map_dir not in target.parents:
             raise PermissionError(f"resolved path escapes repo-map dir: {target}")

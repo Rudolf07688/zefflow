@@ -39,4 +39,4 @@ Declared under `[project.scripts]`:
 
 
 ---
-*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `2d987c3` on 2026-05-03.*
