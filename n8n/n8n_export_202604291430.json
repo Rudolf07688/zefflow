@@ -1,0 +1,1012 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "e39303c5-befc-40ba-a1ea-3a2dcfd01ef4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT table_schema, table_name \nFROM information_schema.tables \nWHERE table_schema NOT IN ('pg_catalog', 'information_schema') \nAND table_type = 'BASE TABLE'\nORDER BY table_schema, table_name;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        112,
+        0
+      ],
+      "id": "e6adadc7-fe2d-418c-89e9-aef2f28d8b8e",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "Qw7AGp12C3VPAzgM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an system and application analyst and admin. Your job is to look through the postgres database, which is a ruby-on-rails backend db, and identify trends, errors, bad user experiences etc.\n\nYou have access to a PostgreSQL database.  Always call the Get Schema tool first to understand table structures before writing any SQL query. Only write SELECT queries unless instructed otherwise.\n\nYou will always act fully autonomously, so don't ask clarifying questions. Your response will be sent as a Slack message to the human team so format it nicely.",
+          "maxIterations": 20
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        16
+      ],
+      "id": "04a2f52d-f7cc-4491-a9a0-df7057753645",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        320
+      ],
+      "id": "82530423-f4e3-4a86-85ae-fc88390ee182",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        592,
+        -96
+      ],
+      "id": "e300347b-d425-4d88-b971-d9eee2cdf45f",
+      "name": "When chat message received",
+      "webhookId": "0fce62e6-d595-49c4-b259-1af269a96a30"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        192
+      ],
+      "id": "2152b846-6be5-4698-a206-f8515a00a883",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "LQE6sYr1nnHMKNDK",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Execute a SQL query against the PostgreSQL database. Returns rows from the result.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query', 'A valid SQL query to run against the database') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        1328,
+        256
+      ],
+      "id": "bf32d20d-7ee4-4e25-8f35-0b6f4d3baf7e",
+      "name": "Execute a SQL query in Postgres1",
+      "credentials": {
+        "postgres": {
+          "id": "Qw7AGp12C3VPAzgM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Retrieve table schemas from the postgres db",
+        "operation": "executeQuery",
+        "query": "SELECT table_name, column_name, data_type \nFROM information_schema.columns \nWHERE table_schema = 'public' \nORDER BY table_name, ordinal_position;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        1168,
+        256
+      ],
+      "id": "ac6666b8-d8d2-47f4-9e73-4afeefb0f525",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "Qw7AGp12C3VPAzgM",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Execute a SQL query": [
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "agent_errors"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "agent_responses"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "annotation_tag_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "auth_identity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "auth_provider_sync_history"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "binary_data"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_agent_tools"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_agents"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_messages"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_session_tools"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_sessions"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "chat_hub_tools"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "conversations"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "credential_dependency"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "credentials_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "data_sources"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "data_table"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "data_table_column"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "deployment_key"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "dynamic_credential_entry"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "dynamic_credential_resolver"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "dynamic_credential_user_entry"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "event_destinations"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "execution_annotation_tags"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "execution_annotations"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "execution_data"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "execution_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "execution_metadata"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "folder"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "folder_tag"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "insights_by_period"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "insights_metadata"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "insights_raw"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "installed_nodes"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "installed_packages"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_iteration_logs"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_messages"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_observational_memory"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_resources"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_run_snapshots"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_threads"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_ai_workflow_snapshots"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "instance_version_history"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "invalid_auth_token"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "messages"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "migrations"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "oauth_access_tokens"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "oauth_authorization_codes"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "oauth_clients"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "oauth_refresh_tokens"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "oauth_user_consents"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "processed_data"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "project"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "project_relation"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "project_secrets_provider_access"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "query_executions"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "role"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "role_mapping_rule"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "role_mapping_rule_project"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "role_scope"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "scope"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "secrets_provider_connection"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "settings"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "shared_credentials"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "shared_workflow"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "tag_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "test_case_execution"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "test_run"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "token_exchange_jti"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "tool_calls"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "trusted_key"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "trusted_key_source"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "user"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "user_api_keys"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "user_favorites"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "users"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "variables"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "webhook_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_builder_session"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_dependency"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_entity"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_history"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_publish_history"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_published_version"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflow_statistics"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "table_schema": "public",
+          "table_name": "workflows_tags"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        []
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query in Postgres1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "815b10a4-547d-4fe3-b4b6-9e546b3256de",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4110338624e250f3ef1b0af84213e21aab779f885367861af5ffa4e391c51b82"
+  },
+  "id": "CGL7aG6m9KBphGG2",
+  "tags": []
+}

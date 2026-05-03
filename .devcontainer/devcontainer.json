@@ -17,7 +17,9 @@
 
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     "forwardPorts": [
-        11434
+        5432,   // Postgres
+        5678,   // n8n
+        11434  // ollama
     ],
 
     // Use 'postCreateCommand' to run commands after the container is created.

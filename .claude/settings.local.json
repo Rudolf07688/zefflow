@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import psycopg2; print\\('psycopg2 ok'\\)\")",
+      "Bash(python -c \"import psycopg; print\\('psycopg3 ok'\\)\")",
+      "Bash(uv pip *)",
+      "Bash(uv add *)",
+      "Bash(python -c \"from zefflow.db.db_models import Base, User, DataSource, Conversation, Message, AgentResponse, ToolCall, QueryExecution, AgentError; print\\('models import OK'\\)\")",
+      "Bash(python -c \"from zefflow.db.db_models import Base; print\\('OK'\\)\")",
+      "Bash(uv run *)",
+      "Bash(pg_isready -h localhost -p 5432)"
+    ]
+  }
+}

@@ -113,6 +113,14 @@ class AppConfig(BaseSettings):
         ),
     )
 
+    # ── Google Cloud / Vertex AI ─────────────────────────────────────────
+    google_cloud_project: str = Field(
+        "", description="GCP project ID used for Vertex AI calls."
+    )
+    google_cloud_location: str = Field(
+        "us-central1", description="GCP region for Vertex AI endpoint."
+    )
+
 default_app_config = AppConfig()
 
 # # ── PostgreSQL ────────────────────────────────────────────────────────────

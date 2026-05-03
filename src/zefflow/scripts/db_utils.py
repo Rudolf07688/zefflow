@@ -8,7 +8,7 @@ import typer
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-from zefflow.config import app_config
+from zefflow.config import AppConfig, default_app_config
 from zefflow.db.db_models import (
     AgentError,
     AgentResponse,
@@ -42,7 +42,7 @@ def drop_tables(engine: sqlalchemy.engine.Engine) -> None:
 def _build_db_url(db_url: Optional[str] = None) -> str:
     if db_url:
         return db_url
-    cfg = app_config.default_app_config
+    cfg: AppConfig = default_app_config
     return (
         f"postgresql+psycopg2://{cfg.postgres_user}:{cfg.postgres_password}"
         f"@{cfg.postgres_host}:{cfg.db_postgresdb_port}/{cfg.postgres_db}"

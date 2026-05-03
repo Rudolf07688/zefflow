@@ -38,23 +38,29 @@ log_general "($uv pip list)"
 
 # Random shit
 apt-get update && apt-get install -y curl tree zstd
-apt-get upgrade zstd
+apt-get upgrade -y zstd
 
 # Ollama
+INSTALL_OLLAMA=false
 OLLAMA_BIN="/usr/local/bin/ollama"
-install_ollama() {
-    log_general "Ollama not found. Installing Ollama..."
-    curl -fsSL https://ollama.com/install.sh | sh
-}
 
-if [ ! -f "$OLLAMA_BIN" ]; then
-    if ! install_ollama; then
-        log_general "Failed to install Ollama. Please check the error messages above."
-        return 1 2>/dev/null || exit 1
+if [ $INSTALL_OLLAMA = true ]; then
+    install_ollama() {
+        log_general "Ollama not found. Installing Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    }
+
+    if [ ! -f "$OLLAMA_BIN" ]; then
+        if ! install_ollama; then
+            log_general "Failed to install Ollama. Please check the error messages above."
+            return 1 2>/dev/null || exit 1
+        fi
     fi
+else
+    log_general "INSTALL_OLLAMA is set to $INSTALL_OLLAMA. Skipping Ollama installation."
 fi
 
-log_general "Ollama available at $OLLAMA_BIN. Please rather run on host and port forward to container for best performance."
+log_general "Ollama available at $OLLAMA_BIN. Please run on host and port forward to container for best performance."
 
 # ---------------------------------- Exports --------------------------------- #
 log_general "Exporting build context variables..."

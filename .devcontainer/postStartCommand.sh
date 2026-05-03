@@ -25,7 +25,7 @@ fi
 source .venv/bin/activate
 log_general "Activated Python virtual environment."
 log_general "UV version: $(uv --version)"
-log_general "UV Python: $(uv python version)"
+log_general "UV Python: $(uv run python --version)"
 log_general "Docker version: $(docker --version)"
 
 if [ -f "/workspaces/zefflow/.venv" ]; then
