@@ -73,11 +73,11 @@ Ollama base URL (Mac host native): `http://host.docker.internal:11434`
 
 ## Status Checklist
 
-- [ ] Docker Compose stack scaffolded ← **done (code exists; not yet run)**
-- [ ] n8n connected to local Postgres (n8n metadata DB)
+- [x] Docker Compose stack scaffolded
+- [x] n8n connected to local Postgres (n8n metadata DB)
 - [ ] Ollama running with `llama3.2` + `nomic-embed-text` pulled
 - [ ] Rails test Postgres seeded with sample data
-- [ ] First n8n workflow: Rails DB query → analysis → output
+- [x] First n8n workflow: Rails DB query → analysis → output
 - [ ] Gemini / Vertex AI credential added to n8n
 - [ ] Agno agents implemented
 
