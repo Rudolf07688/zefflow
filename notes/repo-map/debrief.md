@@ -38,6 +38,7 @@
 -   **R9. Cite a file path or command for every non-trivial claim.** "Tests are smoke-only" → link the test file. "Env validates fail-fast" → link the validator.
 -   **R10. Diagrams only where structure beats prose** — system architecture and data flow yes; per-module call graphs no.
 -   **R11. For mermaid: quoted labels, no inline `:::class` on shaped nodes, no edges into subgraphs.** (Source: [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) instructions)
+-   **R12. Output ONLY a single raw JSON object. NO markdown fences. NO commentary before or after.** (Source: [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) instructions)
 
 ## What I'd add to the methodology
 
@@ -84,4 +85,4 @@ phase 4  Self-review  ◄──────────────────�
 
 
 ---
-*Last verified against commit `2d987c3` on 2026-05-03.*
+*Last verified against commit `c8221e0` on 2026-05-03.*

@@ -58,7 +58,7 @@ The pre-drill read was directionally right but materially overestimated maturity
 | `agent-workflows` package | Real Agno scaffold: `BaseWorkflow`, `BaseAgent`, registry, one demo workflow (`daily_db_report`), LLM-backed mock data factory; `pyproject.toml` now correctly packages `scripts/` | [agent-workflows/src/agent_workflows/](../../agent-workflows/src/agent_workflows/) |
 | `agent-workflows` config | Now uses a lazy-loaded Settings proxy for no-LLM commands | [agent-workflows/src/agent_workflows/config.py](../../agent-workflows/src/agent_workflows/config.py) |
 | `repo_tools.py` | Read-only tool layer for repo introspection | [agent-workflows/src/agent_workflows/tools/repo_tools.py](../../agent-workflows/src/agent_workflows/tools/repo_tools.py) |
-| `repo_map_refresh.py` | Agent workflow for updating repo-map docs | [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) |
+| `repo_map_refresh.py` | Agent workflow for updating repo-map docs; now supports skipping out-of-scope patches | [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) |
 | `repo_map_init.py` | Agent workflow for initial generation of repo-map docs | [agent-workflows/src/agent_workflows/workflows/repo_map_init.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_init.py) | ✅ new |
 | Tests | One smoke test file, **no LLM/integration tests** | [agent-workflows/tests/test_smoke.py](../../agent-workflows/tests/test_smoke.py) |
 | n8n workflows | One demo export only (`manualTrigger → postgres → langchain.agent + Gemini + memoryBufferWindow + 2 postgresTool`) | `n8n/n8n_export_202604291430.json` |
@@ -182,7 +182,7 @@ Dashed = aspirational / not yet wired.
 | [scripts/install-hooks.sh](../../scripts/install-hooks.sh) | Installs `repo-map-check` as a non-blocking pre-commit hook | ✅ |
 | [src/zefflow/](../../src/zefflow/) | Python package: env config, Postgres seed/reset, compose-up wrapper | partial |
 | [src/zefflow/config/app_config.py](../../src/zefflow/config/app_config.py) | Single source of truth for env vars (Postgres, n8n, Ollama, GCP) | ✅ |
-| [src/zefflow/db/db_models.py](../../src/zefflow/db/db_models.py) | SQLAlchemy ORM for a chatbot-style schema (users, conversations, tool_calls, …) | ✅ but unrelated to Rails |
+| [src/zefflow/db/db_models.py](../../src/zefflow/db/db_models.py) | SQLAlchemy 2.0 ORM: `User`, `DataSource`, `Conversation`, `Message`, `AgentResponse`, `ToolCall`, `QueryExecution`, `AgentError`. Schema looks like a SQL-agent chat product. | ✅ but unrelated to Rails |
 | [src/zefflow/scripts/](../../src/zefflow/scripts/) | `compose-up` and `db` Typer/argparse CLIs | ✅ |
 | [agents/](../../src/zefflow/agents/) | **Empty** (only `__init__.py`). |
 | [agent-workflows/](../../agent-workflows/) | Agno + Gemini agent runtime, separate uv project | scaffold |
@@ -227,7 +227,7 @@ See [05-open-questions.md](05-open-questions.md). Highlights:
 2.  Do `zefflow.db.db_models` (chatbot schema) and `agent_workflows.db.models` (Customer/Product/Order) describe **the same future system**? Currently they look unrelated.
 3.  What is the actual Rails DB target? Nothing in the code references it yet.
 4.  Is `infra/Dockerfile` going to be filled in or removed?
-5.  The root `pyproject.toml` lists `"srt"` under `[tool.hatch.build.targets.wheel].packages` — this looks like a typo and likely points to a non-existent path.
+5.  The root `pyproject.toml` lists `"srt"` under `[tool.hatch.build.targets.wheel].packages` — almost certainly a typo for a path that no longer exists (see [05-open-questions.md](05-open-questions.md)).
 
 ---
 
@@ -242,4 +242,4 @@ See [05-open-questions.md](05-open-questions.md). Highlights:
 
 
 ---
-*Last verified against commit `2d987c3` on 2026-05-03.*
+*Last verified against commit `c8221e0` on 2026-05-03.*

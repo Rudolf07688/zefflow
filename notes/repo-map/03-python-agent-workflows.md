@@ -11,7 +11,7 @@ The **agent runtime** — Agno-based agents and workflows that target Gemini (or
 ```mermaid
 flowchart LR
     CLI[scripts/run_workflow.py<br/>"Typer CLI 'run-workflow'"] --> RUN["agent_workflows.run(name)"]
-    ARCLI[scripts/agent_refresh.py<br/>"Typer CLI 'agent-refresh'"]
+    ARCLI[scripts/agent_refresh.py<br/>"Typer CLI 'agent-refresh' (with --from-cache)"]
     ARCLI_INIT["agent-refresh init"] --> INIT_CALL["agent_workflows.run('repo_map_init')"]
     ARCLI_REFRESH["agent-refresh refresh"] --> REFRESH_CALL["agent_workflows.run('repo_map_refresh')"]
 
@@ -51,7 +51,7 @@ flowchart LR
 | [workflows/base.py](../../agent-workflows/src/agent_workflows/workflows/base.py) | `BaseWorkflow` ABC + `WorkflowResult` envelope (`status`, `duration_seconds`, `output`, `error`). `run()` wraps `_execute()` with timing + structured logging. |
 | [workflows/registry.py](../../agent-workflows/src/agent_workflows/workflows/registry.py) | Maps name → class. |
 | [workflows/daily_db_report.py](../../agent-workflows/src/agent_workflows/workflows/daily_db_report.py) | The single demo workflow: `DbInspectorAgent` → findings → `ReporterAgent` → markdown report. |
-| [workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) | `RepoMapRefreshWorkflow` orchestrates repo introspection tools, LLM calls, and applies patches to `repo-map` docs. |
+| [workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) | `RepoMapRefreshWorkflow` orchestrates repo introspection tools, LLM calls, and applies patches to `repo-map` docs. Now includes `apply_cached_plan` for replaying previous runs. |
 | [workflows/repo_map_init.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_init.py) | `RepoMapInitWorkflow` orchestrates repo introspection tools, LLM calls, and writes initial `repo-map` docs. | ✅ |
 | [agents/base.py](../../agent-workflows/src/agent_workflows/agents/base.py) | `BaseAgent` thin wrapper: subclasses set class-level `role`, `instructions`, `tools`. `run(prompt)` returns text; `run_structured(prompt, response_model)` returns a parsed pydantic model. |
 | [agents/db_inspector.py](../../agent-workflows/src/agent_workflows/agents/db_inspector.py) | Read-only DB inspector wired to `db_tools`. |
@@ -82,6 +82,7 @@ flowchart LR
 - Strict mypy + ruff configured (`pyproject.toml`). The `pyproject.toml` now correctly packages `scripts/`.
 - `agno` is unpinned (`>=1.1.0`); see `tickets.json` TICKET-2 — version drift is a known risk.
 - `config.py` now uses a lazy settings proxy, allowing no-LLM `agent-refresh` commands (like `check` or `status`) to run without `GOOGLE_API_KEY` being present in the environment.
+- The `agent-refresh` CLI now includes a `--from-cache` option to replay previous agent outputs without an LLM call ([agent-workflows/scripts/agent_refresh.py](../../agent-workflows/scripts/agent_refresh.py)).
 - Provider-agnostic by design: flip `LLM_PROVIDER` between `gemini` (API key) and `vertex` (ADC + project).
 
 ## What it does *not* do (yet)
@@ -92,4 +93,4 @@ flowchart LR
 
 
 ---
-*Last verified against commit `2d987c3` on 2026-05-03.*
+*Last verified against commit `c8221e0` on 2026-05-03.*

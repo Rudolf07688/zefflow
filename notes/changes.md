@@ -67,3 +67,9 @@
 **Action:** repo-map refresh: init workflow, lenient JSON parsing, `--from-cache` option for refresh.
 **Updated docs:** 00-overview.md, 02-python-zefflow.md, 03-python-agent-workflows.md, 04-dev-and-test.md, debrief.md
 **Verified against:** `2d987c3`
+
+## 2026-05-03 — repo-map refresh
+**Agent:** repo_map_refresh
+**Action:** repo-map refresh: skip out-of-scope patches, --from-cache option, lenient JSON parsing, debrief rule updates.
+**Updated docs:** 00-overview.md, 02-python-zefflow.md, 03-python-agent-workflows.md, 04-dev-and-test.md, debrief.md
+**Verified against:** `c8221e0`

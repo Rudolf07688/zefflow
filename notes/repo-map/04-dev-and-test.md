@@ -78,4 +78,4 @@ The root `zefflow` package has **no tests**.
 
 
 ---
-*Last verified against commit `2d987c3` on 2026-05-03.*
+*Last verified against commit `c8221e0` on 2026-05-03.*
