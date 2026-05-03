@@ -1,0 +1,122 @@
+[
+  {
+    "id": "TICKET-1",
+    "title": "Install scaffold & verify deps",
+    "desc": "Bring up the agent-workflows scaffold in a fresh dev container and confirm everything imports cleanly.",
+    "ac": "`uv sync` succeeds against the provided pyproject.toml.\n`uv run pytest tests/test_smoke.py` passes (no LLM calls required).\n`python -c \"import agno, google.genai, structlog, sqlalchemy\"` returns no errors.\n.env is created from .env.example and GOOGLE_API_KEY is set.\nREADME quick-start steps reproduced end-to-end at least once.",
+    "est": "30 min",
+    "type": "chore",
+    "priority": "p1",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-2",
+    "title": "Pin agno + verify LLM factory imports",
+    "desc": "agno's API moves fast. Confirm `agno.models.google.Gemini` constructor signature (id, api_key, vertexai, project_id, location) matches the installed version, and pin in pyproject.",
+    "ac": "Installed agno version recorded in pyproject (no broad `>=`).\n`build_model()` returns a working Gemini model in both provider modes.\nSmoke call: `BaseAgent().run(\"say hi\")` returns text via Gemini API.\nIf agno renamed/moved Gemini class, llm.py is patched and a comment notes the version it targets.",
+    "est": "45 min",
+    "type": "chore",
+    "priority": "p1",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-3",
+    "title": "End-to-end smoke: seed → workflow",
+    "desc": "Prove the full loop works against SQLite with tiny LLM-generated batches.",
+    "ac": "`uv run seed-db --customers 3 --products 2 --orders 5` populates dev.db.\n`uv run run-workflow daily_db_report` returns status=success.\nFinal markdown report is rendered in the terminal via rich.\nEnd-to-end run completes in < 60s on `gemini-2.5-flash`.",
+    "est": "1 hr",
+    "type": "feat",
+    "priority": "p1",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-4",
+    "title": "Replace sample schemas with real domain models",
+    "desc": "Swap the placeholder Customer/Product/Order schemas for whatever actually lives in the target DB.",
+    "ac": "`data_generation/schemas.py` updated with real domain types + Field constraints (ranges, regex, enums).\nMatching SQLAlchemy ORM models in `db/models.py` are kept in sync (FK, types, indexes).\nMockDataFactory generates valid rows that pass pydantic validation 100% of the time across 5 runs of n=20.\nDocumented mapping table in README: pydantic schema ↔ ORM table.",
+    "est": "1–2 hrs",
+    "type": "feat",
+    "priority": "p1",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-5",
+    "title": "FK-aware mock generation",
+    "desc": "Make MockDataFactory respect referential integrity when generating dependent tables (e.g. orders.customer_id must point to a real customer).",
+    "ac": "`MockDataFactory.generate_with_refs(...)` (or equivalent) accepts a dict of allowed FK values per field.\nPrompt includes the allowed value lists so the LLM stays inside them.\nPost-generation validation rejects any row with an out-of-range FK and retries up to 3 times.\nUnit test: generate 50 orders against 5 fixed customer_ids → assert all FKs valid.",
+    "est": "2 hrs",
+    "type": "feat",
+    "priority": "p2",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-6",
+    "title": "Add second concrete workflow",
+    "desc": "Prove the BaseWorkflow + registry pattern scales by adding a second workflow alongside daily_db_report (e.g. AnomalyAlertWorkflow or WeeklyTrendWorkflow).",
+    "ac": "New workflow class registered in `workflows/registry.py`.\n`run(\"<new_name>\")` returns a successful WorkflowResult.\nTest in `tests/` asserts both workflows are registered and runnable (mocked agent).\nREADME's \"Adding a new workflow\" section verified by following it for the new one.",
+    "est": "1 hr",
+    "type": "feat",
+    "priority": "p2",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-7",
+    "title": "Tool-call observability",
+    "desc": "Every agno tool invocation should produce a structured log line so we can trace what the agent did during a workflow run.",
+    "ac": "Tool wrapper or callback logs: tool_name, args (truncated), duration_ms, status, error (if any).\nLogs include workflow_name + agent_role via structlog contextvars.\n`run(\"daily_db_report\")` produces a complete tool-call timeline visible in stdout JSON logs.\nDocumented in README under an \"Observability\" section.",
+    "est": "2 hrs",
+    "type": "feat",
+    "priority": "p2",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-8",
+    "title": "Containerise with Dockerfile + GKE manifest",
+    "desc": "Package the scaffold so workflows can run on GKE (or any K8s) on a schedule.",
+    "ac": "Multi-stage Dockerfile builds with `uv` and produces a slim runtime image (<300MB).\n`k8s/cronjob.yaml` runs `run-workflow daily_db_report` daily at 06:00 UTC.\nSecrets (GOOGLE_API_KEY, DATABASE_URL) read from a K8s Secret, not baked in.\nLocal `docker run` reproduces the same end-to-end output as TICKET-3.",
+    "est": "Half-day",
+    "type": "chore",
+    "priority": "p2",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-9",
+    "title": "Cloud Composer DAG hook",
+    "desc": "Schedule workflows from Cloud Composer (Airflow on GCP) for production-grade orchestration with retries + alerts.",
+    "ac": "`dags/agent_workflows_dag.py` defines a DAG that calls `run(\"daily_db_report\")` via KubernetesPodOperator.\nDAG retries 2x with 5-min backoff on failure.\nFailure callback posts to a Slack webhook (URL from Airflow Variable).\nDeployment instructions in README under \"Composer\".",
+    "est": "Half-day",
+    "type": "feat",
+    "priority": "p2",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-10",
+    "title": "Vertex AI provider validation",
+    "desc": "Confirm the `LLM_PROVIDER=vertex` path works end-to-end with ADC, including in-cluster on GKE.",
+    "ac": "`gcloud auth application-default login` flow documented in README.\n`LLM_PROVIDER=vertex uv run run-workflow daily_db_report` succeeds against a real GCP project.\nIn-cluster smoke test using a Workload-Identity-bound KSA returns a successful run.\nREADME comparison table: Gemini API vs Vertex (latency, quotas, billing, regions).",
+    "est": "2 hrs",
+    "type": "stretch",
+    "priority": "p3",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-11",
+    "title": "AgentOS integration for traces & sessions",
+    "desc": "Wire the existing agents into agno's AgentOS so we get traces, sessions, and a control-plane UI for free.",
+    "ac": "`scripts/agent_os.py` builds an AgentOS with all registered agents + workflows.\n`fastapi dev scripts/agent_os.py` exposes `http://localhost:8000/docs`.\nA full workflow run is visible in the AgentOS UI with per-tool traces.\nREADME documents the dev UX trade-off (AgentOS for debugging, CLI for prod).",
+    "est": "Half-day",
+    "type": "stretch",
+    "priority": "p3",
+    "status": "todo"
+  },
+  {
+    "id": "TICKET-12",
+    "title": "Multi-agent team variant",
+    "desc": "Refactor DailyDbReportWorkflow to use an agno Team (DbInspector + Reporter coordinating) instead of sequential single-agent calls — measure quality vs cost.",
+    "ac": "New `TeamDailyDbReportWorkflow` registered alongside the original.\nUses `agno.team.Team` with the two existing agents as members.\nREADME table compares: tokens used, wall-clock time, qualitative report quality on the same seeded DB.\nKeep both versions — the simple one stays the default.",
+    "est": "Half-day",
+    "type": "stretch",
+    "priority": "p3",
+    "status": "todo"
+  }
+]
