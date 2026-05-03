@@ -83,23 +83,123 @@ def status() -> None:
     console.print(t)
 
 
-@app.command()
-def refresh(
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
-) -> None:
-    """Tier-2: incremental refresh of affected docs via the agent."""
+def _require_api_key() -> None:
+    """Pre-flight: fail fast if the LLM has no creds. Never reads .env."""
     import os
 
-    # Pre-flight: an LLM call needs a key. Check env only; we never read .env
-    # ourselves — pydantic-settings will pick it up if pytest-dotenv loads it
-    # via uv. If neither is true, fail fast.
     if not (os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")):
         console.print(
             "[red]GOOGLE_API_KEY not set in environment.[/red]\n"
             "Export it for this shell:  [bold]export GOOGLE_API_KEY=...[/bold]\n"
-            "or place it in agent-workflows/.env (loaded automatically), then re-run."
+            "or place it in a `.env` file (loaded automatically), then re-run."
         )
         raise typer.Exit(code=1)
+
+
+@app.command()
+def init(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+    force: bool = typer.Option(
+        False, "--force", help="Overwrite existing repo-map docs."
+    ),
+) -> None:
+    """Tier-3: full first-time scan + write all repo-map docs."""
+    _require_api_key()
+
+    repo_map_dir = _repo_root() / "notes" / "repo-map"
+    existing = (
+        sorted(p.name for p in repo_map_dir.glob("*.md"))
+        if repo_map_dir.exists()
+        else []
+    )
+    if existing and not force:
+        console.print(
+            f"[yellow]notes/repo-map/ already contains {len(existing)} docs.[/yellow]\n"
+            "Use [bold]agent-refresh refresh[/bold] for incremental updates,\n"
+            "or [bold]agent-refresh init --force[/bold] to rebuild from scratch."
+        )
+        raise typer.Exit(code=2)
+
+    if not yes:
+        ok = typer.confirm(
+            "Run a full agent-driven init of notes/repo-map/? (this is a Tier-3 LLM call)",
+            default=True,
+        )
+        if not ok:
+            raise typer.Exit(code=0)
+
+    from agent_workflows import run
+
+    result = run("repo_map_init")
+    console.print(
+        Panel.fit(
+            f"status: [{'green' if result.status == 'success' else 'red'}]{result.status}[/]\n"
+            f"duration: {result.duration_seconds:.2f}s",
+            title="agent-refresh init",
+            border_style="cyan",
+        )
+    )
+    if result.status == "failed":
+        console.print(f"[red]error:[/red] {result.error}")
+        raise typer.Exit(code=1)
+
+    out = result.output
+    console.print(f"wrote: [bold]{', '.join(out.get('applied') or [])}[/bold]")
+    if out.get("missing_docs"):
+        console.print(f"[yellow]missing:[/yellow] {', '.join(out['missing_docs'])}")
+    console.print(f"post-check clean: [bold]{out.get('post_check_clean')}[/bold]")
+    console.print(
+        "[yellow]Review then commit:[/yellow]\n"
+        "  git add notes/repo-map/ notes/changes.md\n"
+        f"  git commit -m \"docs(repo-map): init against {out.get('head_sha', '')[:7]}\""
+    )
+
+
+@app.command()
+def refresh(
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation."),
+    from_cache: bool = typer.Option(
+        False,
+        "--from-cache",
+        help="Re-apply notes/repo-map/.last_agent_output.txt instead of calling the LLM.",
+    ),
+) -> None:
+    """Tier-2: incremental refresh of affected docs via the agent."""
+    if from_cache:
+        cache_path = _repo_root() / "notes" / "repo-map" / ".last_agent_output.txt"
+        if not cache_path.exists():
+            console.print(
+                "[red]No cached agent output at "
+                "notes/repo-map/.last_agent_output.txt.[/red]\n"
+                "Run [bold]agent-refresh refresh[/bold] without --from-cache first; "
+                "the response is saved before parsing."
+            )
+            raise typer.Exit(code=1)
+
+        from agent_workflows.workflows.repo_map_refresh import apply_cached_plan
+
+        try:
+            out = apply_cached_plan(cache_path.read_text())
+        except Exception as exc:
+            console.print(f"[red]apply failed:[/red] {exc}")
+            raise typer.Exit(code=1)
+
+        console.print(
+            Panel.fit(
+                "status: [green]success[/] (replayed cache)",
+                title="agent-refresh", border_style="cyan",
+            )
+        )
+        console.print(f"updated docs: [bold]{', '.join(out.get('applied') or [])}[/bold]")
+        console.print(f"post-check clean: [bold]{out.get('post_check_clean')}[/bold]")
+        console.print(
+            "[yellow]Review changes, then commit:[/yellow]\n"
+            "  git add notes/repo-map/ notes/changes.md\n"
+            f"  git commit -m \"docs(repo-map): refresh against {out.get('head_sha', '')[:7]}\""
+        )
+        return
+
+    _require_api_key()
 
     if not yes:
         ok = typer.confirm("Run agent-driven refresh of notes/repo-map/?", default=True)

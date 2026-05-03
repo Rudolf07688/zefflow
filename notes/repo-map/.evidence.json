@@ -1,40 +1,16 @@
 {
   "schema_version": 1,
-  "git_sha": "6319dfb7a26ba0536f1289dcb0ab85c90b8ea8c2",
-  "git_short_sha": "6319dfb",
-  "generated_at": "2026-05-03T17:16:38Z",
+  "git_sha": "b3aff615540586c94307262147a01d800a9f1d4a",
+  "git_short_sha": "b3aff61",
+  "generated_at": "2026-05-03T19:05:37Z",
   "generator": "manual dry run by Copilot per notes/repo_overwiew.md",
   "files_cited": {
     "00-overview.md": [
-      "docker-compose.yml",
-      "notes/architecture.md",
-      "src/zefflow/scripts/compose_up.py",
-      "src/zefflow/scripts/db_utils.py",
+      "agent-workflows/src/agent_workflows/workflows/repo_map_init.py",
+      "agent-workflows/src/agent_workflows/workflows/__init__.py",
+      "agent-workflows/src/agent_workflows/workflows/registry.py",
       "notes/changes.md",
-      "src/zefflow/config/app_config.py",
-      "agent-workflows/src/agent_workflows/",
-      "agent-workflows/src/agent_workflows/config.py",
-      "agent-workflows/src/agent_workflows/tools/repo_tools.py",
-      "agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py",
-      "agent-workflows/tests/test_smoke.py",
-      "n8n/n8n_export_202604291430.json",
-      "src/zefflow/db/db_models.py",
-      "agent-workflows/src/agent_workflows/workflows/base.py",
-      "agent-workflows/src/agent_workflows/data_generation/factory.py",
-      "agent-workflows/tickets.json",
-      "05-open-questions.md",
-      "notes/n8n-workflows.md",
-      "01-stack-and-services.md",
-      "02-python-zefflow.md",
-      "03-python-agent-workflows.md",
-      "04-dev-and-test.md",
-      "debrief.md",
-      "GENERAL.md",
-      "Makefile",
-      "scripts/check-repo-map.sh",
-      "scripts/install-hooks.sh",
-      "notes/AGENTS.md",
-      "compose_up.sh"
+      "Makefile"
     ],
     "01-stack-and-services.md": [
       "docker-compose.yml",
@@ -46,50 +22,21 @@
       "notes/n8n-workflows.md"
     ],
     "02-python-zefflow.md": [
-      "src/zefflow/",
-      "pyproject.toml",
-      "src/zefflow/scripts/compose_up.py",
-      "src/zefflow/scripts/db_utils.py",
-      "src/zefflow/config/app_config.py",
-      "src/zefflow/db/db_models.py",
-      "notes/changes.md",
-      "05-open-questions.md"
+      "notes/changes.md"
     ],
     "03-python-agent-workflows.md": [
-      "agent-workflows/",
-      "agent-workflows/pyproject.toml",
-      "agent-workflows/src/agent_workflows/config.py",
-      "agent-workflows/src/agent_workflows/llm.py",
-      "agent-workflows/src/agent_workflows/logging.py",
-      "agent-workflows/src/agent_workflows/workflows/base.py",
-      "agent-workflows/src/agent_workflows/workflows/registry.py",
-      "agent-workflows/src/agent_workflows/workflows/daily_db_report.py",
-      "agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py",
-      "agent-workflows/src/agent_workflows/agents/base.py",
-      "agent-workflows/src/agent_workflows/agents/db_inspector.py",
-      "agent-workflows/src/agent_workflows/agents/reporter.py",
-      "agent-workflows/src/agent_workflows/tools/db_tools.py",
-      "agent-workflows/src/agent_workflows/tools/repo_tools.py",
-      "agent-workflows/src/agent_workflows/db/engine.py",
-      "agent-workflows/src/agent_workflows/db/models.py",
-      "src/zefflow/db/db_models.py",
-      "agent-workflows/src/agent_workflows/data_generation/factory.py",
-      "agent-workflows/src/agent_workflows/data_generation/schemas.py",
-      "agent-workflows/src/agent_workflows/data_generation/seeders.py",
-      "agent-workflows/scripts/run_workflow.py",
-      "agent-workflows/scripts/seed_db.py",
       "agent-workflows/scripts/agent_refresh.py",
-      "agent-workflows/tests/test_smoke.py",
-      "agent-workflows/tickets.json"
+      "agent-workflows/src/agent_workflows/workflows/__init__.py",
+      "agent-workflows/src/agent_workflows/workflows/registry.py",
+      "agent-workflows/src/agent_workflows/workflows/repo_map_init.py",
+      "agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py",
+      "agent-workflows/src/agent_workflows/workflows/base.py",
+      "agent-workflows/src/agent_workflows/agents/base.py",
+      "agent-workflows/src/agent_workflows/tools/repo_tools.py"
     ],
     "04-dev-and-test.md": [
-      "notes/architecture.md",
-      "src/zefflow/scripts/db_utils.py",
-      "notes/changes.md",
-      "tickets.json",
       "agent-workflows/scripts/agent_refresh.py",
-      "Makefile",
-      "agent-workflows/src/agent_workflows/config.py"
+      "notes/changes.md"
     ],
     "05-open-questions.md": [
       "pyproject.toml",
@@ -105,15 +52,8 @@
       "notes/n8n-workflows.md"
     ],
     "debrief.md": [
-      "notes/repo_overwiew.md",
-      "pyproject.toml",
-      "docker-compose.yml",
-      "notes/",
-      "tickets.json",
-      "00-overview.md",
-      "agent-workflows/src/agent_workflows/tools/repo_tools.py",
-      "05-open-questions.md",
-      "notes/architecture.md"
+      "agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py",
+      "notes/changes.md"
     ]
   },
   "manifest_fingerprint_inputs": [

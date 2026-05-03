@@ -10,25 +10,34 @@ The **agent runtime** — Agno-based agents and workflows that target Gemini (or
 
 ```mermaid
 flowchart LR
-    CLI[scripts/run_workflow.py<br/>Typer CLI 'run-workflow'] --> RUN["agent_workflows.run(name)"]
-    ARCLI[scripts/agent_refresh.py<br/>Typer CLI 'agent-refresh'] --> RMR["agent_workflows.run('repo_map_refresh')"]
-    RUN --> REG[workflows/registry.py<br/>WORKFLOWS dict]
-    RMR --> REG
-    REG --> WF[workflows/daily_db_report.py<br/>DailyDbReportWorkflow]
-    REG --> RMRWF[workflows/repo_map_refresh.py<br/>RepoMapRefreshWorkflow]
+    CLI[scripts/run_workflow.py<br/>"Typer CLI 'run-workflow'"] --> RUN["agent_workflows.run(name)"]
+    ARCLI[scripts/agent_refresh.py<br/>"Typer CLI 'agent-refresh'"]
+    ARCLI_INIT["agent-refresh init"] --> INIT_CALL["agent_workflows.run('repo_map_init')"]
+    ARCLI_REFRESH["agent-refresh refresh"] --> REFRESH_CALL["agent_workflows.run('repo_map_refresh')"]
+
+    RUN --> REG[workflows/registry.py<br/>"WORKFLOWS dict"]
+    INIT_CALL --> REG
+    REFRESH_CALL --> REG
+
+    REG --> WF[workflows/daily_db_report.py<br/>"DailyDbReportWorkflow"]
+    REG --> RMRWF[workflows/repo_map_refresh.py<br/>"RepoMapRefreshWorkflow"]
+    REG --> RMIWF[workflows/repo_map_init.py<br/>"RepoMapInitWorkflow"]
+
     WF --> A1[agents/db_inspector.py]
     WF --> A2[agents/reporter.py]
-    RMRWF --> BA[agents/base.py<br/>BaseAgent → agno.Agent]
+    RMRWF --> BA[agents/base.py<br/>"BaseAgent → agno.Agent"]
+    RMIWF --> BA
     A1 --> BA
     A2 --> BA
-    BA --> LLM[llm.py<br/>build_model → agno.models.google.Gemini]
-    A1 --> TOOLS[tools/db_tools.py<br/>list_tables / describe_table / run_sql]
-    RMRWF --> RPTL[tools/repo_tools.py<br/>git, file I/O, mermaid lint]
-    TOOLS --> ENG[db/engine.py<br/>cached SQLAlchemy engine]
-    ENG --> CFG[config.py<br/>Settings.database_url]
-    SEED[scripts/seed_db.py 'seed-db'] --> MDF[data_generation/factory.py<br/>MockDataFactory] --> BA
-    MDF --> SCH[data_generation/schemas.py<br/>Customer/Product/Order]
-    SEED --> SDR[data_generation/seeders.py<br/>seed_table]
+    BA --> LLM[llm.py<br/>"build_model → agno.models.google.Gemini"]
+    A1 --> TOOLS[tools/db_tools.py<br/>"list/describe/run_sql"]
+    RMRWF --> RPTL[tools/repo_tools.py<br/>"git, file I/O, mermaid lint"]
+    RMIWF --> RPTL
+    TOOLS --> ENG[db/engine.py<br/>"cached SQLAlchemy engine"]
+    ENG --> CFG[config.py<br/>"Settings.database_url"]
+    SEED[scripts/seed_db.py<br/>"'seed-db'"] --> MDF[data_generation/factory.py<br/>"MockDataFactory"] --> BA
+    MDF --> SCH[data_generation/schemas.py<br/>"Customer/Product/Order"]
+    SEED --> SDR[data_generation/seeders.py<br/>"seed_table"]
     CFG -.lazy-init.-> LLM
 ```
 
@@ -43,6 +52,7 @@ flowchart LR
 | [workflows/registry.py](../../agent-workflows/src/agent_workflows/workflows/registry.py) | Maps name → class. |
 | [workflows/daily_db_report.py](../../agent-workflows/src/agent_workflows/workflows/daily_db_report.py) | The single demo workflow: `DbInspectorAgent` → findings → `ReporterAgent` → markdown report. |
 | [workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) | `RepoMapRefreshWorkflow` orchestrates repo introspection tools, LLM calls, and applies patches to `repo-map` docs. |
+| [workflows/repo_map_init.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_init.py) | `RepoMapInitWorkflow` orchestrates repo introspection tools, LLM calls, and writes initial `repo-map` docs. | ✅ |
 | [agents/base.py](../../agent-workflows/src/agent_workflows/agents/base.py) | `BaseAgent` thin wrapper: subclasses set class-level `role`, `instructions`, `tools`. `run(prompt)` returns text; `run_structured(prompt, response_model)` returns a parsed pydantic model. |
 | [agents/db_inspector.py](../../agent-workflows/src/agent_workflows/agents/db_inspector.py) | Read-only DB inspector wired to `db_tools`. |
 | [agents/reporter.py](../../agent-workflows/src/agent_workflows/agents/reporter.py) | Turns findings into an exec-style markdown report. |
@@ -60,7 +70,7 @@ flowchart LR
 |---|---|---|
 | `run-workflow` | [`scripts.run_workflow:app`](../../agent-workflows/scripts/run_workflow.py) | Typer + rich UI. Runs a registered workflow, pretty-prints status + duration, renders the markdown `report` if present. |
 | `seed-db` | [`scripts.seed_db:app`](../../agent-workflows/scripts/seed_db.py) | `init_db()`, then LLM-generates customers / products / orders and `seed_table()`s them. |
-| `agent-refresh` | [`scripts.agent_refresh:app`](../../agent-workflows/scripts/agent_refresh.py) | Typer CLI: `check`, `status`, `refresh` for `repo-map` docs. Bare `agent-refresh` runs check then offers refresh. |
+| `agent-refresh` | [`scripts.agent_refresh:app`](../../agent-workflows/scripts/agent_refresh.py) | Typer CLI: check, status, init, refresh; bare `agent-refresh` runs check then offers refresh. |
 
 ## Tests
 
@@ -71,7 +81,7 @@ flowchart LR
 - The package was successfully moved from `src/agent-workflows/` to `agent-workflows/` and this location is now stable.
 - Strict mypy + ruff configured (`pyproject.toml`). The `pyproject.toml` now correctly packages `scripts/`.
 - `agno` is unpinned (`>=1.1.0`); see `tickets.json` TICKET-2 — version drift is a known risk.
-- `config.py` now uses a lazy settings proxy, allowing no-LLM CLI subcommands (`agent-refresh check`) to run without requiring `GOOGLE_API_KEY` in the environment.
+- `config.py` now uses a lazy settings proxy, allowing no-LLM CLI subcommands (`agent-refresh check`) to run without `GOOGLE_API_KEY` being present in the environment.
 - Provider-agnostic by design: flip `LLM_PROVIDER` between `gemini` (API key) and `vertex` (ADC + project).
 
 ## What it does *not* do (yet)
@@ -82,4 +92,4 @@ flowchart LR
 
 
 ---
-*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

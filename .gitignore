@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# repo-map agent — ephemeral debug artefacts (not the docs themselves)
+notes/repo-map/.last_agent_output.txt
+notes/repo-map/.last_init_prompt.txt

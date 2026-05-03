@@ -6,9 +6,11 @@ Add a new workflow:
 """
 from agent_workflows.workflows.base import BaseWorkflow
 from agent_workflows.workflows.daily_db_report import DailyDbReportWorkflow
+from agent_workflows.workflows.repo_map_init import RepoMapInitWorkflow
 from agent_workflows.workflows.repo_map_refresh import RepoMapRefreshWorkflow
 
 WORKFLOWS: dict[str, type[BaseWorkflow]] = {
     DailyDbReportWorkflow.name: DailyDbReportWorkflow,
+    RepoMapInitWorkflow.name: RepoMapInitWorkflow,
     RepoMapRefreshWorkflow.name: RepoMapRefreshWorkflow,
 }

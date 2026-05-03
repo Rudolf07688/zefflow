@@ -37,6 +37,7 @@
 -   **R8. Flag, don't paper over.** Empty `Dockerfile`, typo'd packages, naive guards (`run_sql` keyword filter), default `change_me_*` creds — call them out by name.
 -   **R9. Cite a file path or command for every non-trivial claim.** "Tests are smoke-only" → link the test file. "Env validates fail-fast" → link the validator.
 -   **R10. Diagrams only where structure beats prose** — system architecture and data flow yes; per-module call graphs no.
+-   **R11. For mermaid: quoted labels, no inline `:::class` on shaped nodes, no edges into subgraphs.** (Source: [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) instructions)
 
 ## What I'd add to the methodology
 
@@ -83,4 +84,4 @@ phase 4  Self-review  ◄──────────────────�
 
 
 ---
-*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

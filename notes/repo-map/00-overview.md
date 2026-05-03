@@ -59,6 +59,7 @@ The pre-drill read was directionally right but materially overestimated maturity
 | `agent-workflows` config | Now uses a lazy-loaded Settings proxy for no-LLM commands | [agent-workflows/src/agent_workflows/config.py](../../agent-workflows/src/agent_workflows/config.py) |
 | `repo_tools.py` | Read-only tool layer for repo introspection | [agent-workflows/src/agent_workflows/tools/repo_tools.py](../../agent-workflows/src/agent_workflows/tools/repo_tools.py) |
 | `repo_map_refresh.py` | Agent workflow for updating repo-map docs | [agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_refresh.py) |
+| `repo_map_init.py` | Agent workflow for initial generation of repo-map docs | [agent-workflows/src/agent_workflows/workflows/repo_map_init.py](../../agent-workflows/src/agent_workflows/workflows/repo_map_init.py) | ✅ new |
 | Tests | One smoke test file, **no LLM/integration tests** | [agent-workflows/tests/test_smoke.py](../../agent-workflows/tests/test_smoke.py) |
 | n8n workflows | One demo export only (`manualTrigger → postgres → langchain.agent + Gemini + memoryBufferWindow + 2 postgresTool`) | `n8n/n8n_export_202604291430.json` |
 | Rails DB integration | **Not present.** No Rails schema, no connection target beyond the n8n metadata DB | grep / `db/db_models.py` is bespoke chatbot schema, not a Rails mirror |
@@ -75,7 +76,7 @@ The devs are converging on a **two-track agent system on top of a shared Postgre
 1.  **Track A — n8n workflows for "operational" jobs.** Cron/manual triggers, simple SQL-against-Rails jobs, route easy work to **Ollama** and complex work to **Gemini**.
     - *Signals:* `notes/architecture.md` data-flow diagram explicitly shows this routing; `docker-compose.yml` health-gates n8n on both Postgres and Ollama; the demo n8n workflow already wires `langchain.agent + lmChatGoogleGemini + 2 × postgresTool`.
 
-2.  **Track B — Python `agent-workflows` package for "deep" agent jobs.** Object-oriented Agno agents (`DbInspectorAgent`, `ReporterAgent`, ...) composed into `BaseWorkflow` subclasses, callable as `run("daily_db_report")` from a CLI or another orchestrator (likely n8n's "Execute Command" / HTTP node). This track now includes the `RepoMapRefreshWorkflow` for self-documentation.
+2.  **Track B — Python `agent-workflows` package for "deep" agent jobs.** Object-oriented Agno agents (`DbInspectorAgent`, `ReporterAgent`, ...) composed into `BaseWorkflow` subclasses, callable as `run("daily_db_report")` from a CLI or another orchestrator (likely n8n's "Execute Command" / HTTP node). This track now includes the `RepoMapRefreshWorkflow` and `RepoMapInitWorkflow` for self-documentation.
     - *Signals:* `BaseWorkflow` + registry pattern in [workflows/base.py](../../agent-workflows/src/agent_workflows/workflows/base.py); the LLM-backed `MockDataFactory` ([data_generation/factory.py](../../agent-workflows/src/agent_workflows/data_generation/factory.py)) is an obvious dev-time tool to seed a demo Rails-shaped Postgres before the real one is wired; `tickets.json` TICKET-3 explicitly targets a working `seed → workflow` end-to-end loop.
 
 3.  **Near-term work** (read off `tickets.json` and the unchecked items in `notes/architecture.md`):
@@ -129,6 +130,7 @@ flowchart LR
             MD["MockDataFactory"]
             TL["db_tools<br/>list/describe/run_sql"]
             RMR["RepoMapRefreshWorkflow"]
+            RMI["RepoMapInitWorkflow"]
             RPTL["repo_tools<br/>git, file I/O, mermaid lint"]
         end
         MK[("Makefile<br/>repo-map targets")]
@@ -153,6 +155,8 @@ flowchart LR
 
     RMR --> RPTL
     RMR --> AG
+    RMI --> RPTL
+    RMI --> AG
     MK --> RMR
     MK --> SCR
 
@@ -181,7 +185,7 @@ Dashed = aspirational / not yet wired.
 | [src/zefflow/db/db_models.py](../../src/zefflow/db/db_models.py) | SQLAlchemy ORM for a chatbot-style schema (users, conversations, tool_calls, …) | ✅ but unrelated to Rails |
 | [src/zefflow/scripts/](../../src/zefflow/scripts/) | `compose-up` and `db` Typer/argparse CLIs | ✅ |
 | [agent-workflows/](../../agent-workflows/) | Agno + Gemini agent runtime, separate uv project | scaffold |
-| [agent-workflows/src/agent_workflows/workflows/](../../agent-workflows/src/agent_workflows/workflows/) | `BaseWorkflow`, `registry`, `daily_db_report` demo, `repo_map_refresh` | ✅ scaffold |
+| [agent-workflows/src/agent_workflows/workflows/](../../agent-workflows/src/agent_workflows/workflows/) | `BaseWorkflow`, `registry`, `daily_db_report` demo, `repo_map_refresh`, `repo_map_init` | ✅ scaffold |
 | [agent-workflows/src/agent_workflows/agents/](../../agent-workflows/src/agent_workflows/agents/) | `BaseAgent`, `DbInspectorAgent`, `ReporterAgent` | ✅ scaffold |
 | [agent-workflows/src/agent_workflows/tools/db_tools.py](../../agent-workflows/src/agent_workflows/tools/db_tools.py) | Read-only SQL tools exposed to agents (with a basic write/DDL guard) | ✅ |
 | [agent-workflows/src/agent_workflows/tools/repo_tools.py](../../agent-workflows/src/agent_workflows/tools/repo_tools.py) | Read-only tools for repo introspection: git status/diff/log, file I/O, mermaid lint | ✅ |
@@ -237,4 +241,4 @@ See [05-open-questions.md](05-open-questions.md). Highlights:
 
 
 ---
-*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*
+*Last verified against commit `b3aff61` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

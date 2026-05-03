@@ -55,3 +55,9 @@
 **Action:** 2026-05-03 — agent-refresh CLI implemented (Tier 1 + 2)
 **Updated docs:** 00-overview.md, 02-python-zefflow.md, 03-python-agent-workflows.md, 04-dev-and-test.md, debrief.md
 **Verified against:** `6319dfb`
+
+## 2026-05-03 — repo-map refresh
+**Agent:** repo_map_refresh
+**Action:** repo-map refresh: new RepoMapInitWorkflow, agent-refresh init command added; mermaid rule updated.
+**Updated docs:** 00-overview.md, 02-python-zefflow.md, 03-python-agent-workflows.md, 04-dev-and-test.md, debrief.md
+**Verified against:** `b3aff61`

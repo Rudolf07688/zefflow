@@ -78,6 +78,56 @@ def _extract_first_json_object(text: str) -> str:
     raise ValueError("unbalanced JSON object in agent output")
 
 
+def _parse_lenient_json(text: str) -> Any:
+    """Parse JSON, tolerating raw control characters inside string values.
+
+    Gemini routinely emits literal newlines inside markdown content. Strict
+    RFC 8259 (and pydantic) reject that; stdlib `json.loads(strict=False)`
+    accepts it. Final fallback escapes bare control chars only inside
+    string literals.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    try:
+        return json.loads(text, strict=False)
+    except json.JSONDecodeError:
+        pass
+
+    out: list[str] = []
+    in_str = False
+    esc = False
+    for ch in text:
+        if in_str:
+            if esc:
+                out.append(ch)
+                esc = False
+                continue
+            if ch == "\\":
+                out.append(ch)
+                esc = True
+                continue
+            if ch == '"':
+                in_str = False
+                out.append(ch)
+                continue
+            code = ord(ch)
+            if code < 0x20:
+                out.append(
+                    {0x08: "\\b", 0x09: "\\t", 0x0A: "\\n", 0x0C: "\\f", 0x0D: "\\r"}.get(
+                        code, f"\\u{code:04x}"
+                    )
+                )
+                continue
+            out.append(ch)
+        else:
+            if ch == '"':
+                in_str = True
+            out.append(ch)
+    return json.loads("".join(out), strict=False)
+
+
 def _coerce_plan(raw: Any) -> "RefreshPlan":
     """Normalise agno's varying structured-output return shapes."""
     if isinstance(raw, RefreshPlan):
@@ -85,15 +135,19 @@ def _coerce_plan(raw: Any) -> "RefreshPlan":
     if isinstance(raw, dict):
         return RefreshPlan.model_validate(raw)
     if isinstance(raw, str):
+        # Save the raw response BEFORE parsing — it cost real money.
         try:
-            return RefreshPlan.model_validate_json(_extract_first_json_object(raw))
+            d = repo_root() / "notes" / "repo-map"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / ".last_agent_output.txt").write_text(raw)
+        except Exception:  # pragma: no cover  -- best effort
+            pass
+        body = _extract_first_json_object(raw)
+        try:
+            data = _parse_lenient_json(body)
         except Exception as exc:
-            # Persist the raw output for debugging before re-raising.
-            try:
-                (repo_root() / "notes" / "repo-map" / ".last_agent_output.txt").write_text(raw)
-            except Exception:  # pragma: no cover  -- best effort
-                pass
             raise ValueError(f"failed to parse agent output as JSON: {exc}") from exc
+        return RefreshPlan.model_validate(data)
     raise TypeError(f"unexpected agent response type: {type(raw).__name__}")
 
 
@@ -316,3 +370,88 @@ class RepoMapRefreshWorkflow(BaseWorkflow):
             "unchanged": plan.docs_unchanged,
             "post_check_clean": clean,
         }
+
+def apply_cached_plan(raw_text: str) -> dict[str, Any]:
+    """Re-apply a saved agent response without calling the LLM.
+
+    Reads the current evidence file for the previous SHA, snapshots HEAD,
+    runs the same allowlist + mermaid-lint guardrails as the live workflow,
+    updates `.evidence.json` and `notes/changes.md`, and re-runs the Tier-1
+    detector. Returns the same dict shape as `RepoMapRefreshWorkflow._execute`.
+    """
+    root = repo_root()
+    plan = _coerce_plan(raw_text)
+
+    # Snapshot SHAs.
+    head_sha = git_head_sha()
+    head_short = git_head_sha(short=True)
+    today = datetime.now(UTC).date().isoformat()
+
+    evidence_path = root / EVIDENCE_PATH_REL
+    evidence: dict[str, Any] = (
+        json.loads(evidence_path.read_text()) if evidence_path.exists() else {}
+    )
+    last_sha = evidence.get("git_sha", "")
+
+    # Apply.
+    applied: list[str] = []
+    repo_map_dir = (root / REPO_MAP_DIR_REL).resolve()
+    for patch in plan.patches:
+        requested = patch.filename.strip().lstrip("./")
+        basename = Path(requested).name
+        if basename not in ALLOWED_DOCS:
+            raise PermissionError(
+                f"agent tried to write disallowed file: {patch.filename!r} "
+                f"(basename {basename!r} not in allowlist)"
+            )
+        target = (repo_map_dir / basename).resolve()
+        if repo_map_dir not in target.parents:
+            raise PermissionError(f"resolved path escapes repo-map dir: {target}")
+        issues = mermaid_lint(patch.new_content)
+        if issues:
+            raise ValueError(f"{basename}: mermaid lint failed: {issues}")
+        target.write_text(patch.new_content)
+        applied.append(basename)
+
+    # Update evidence.
+    normalised_cited: dict[str, list[str]] = {}
+    for key, paths in (plan.new_files_cited or {}).items():
+        base = Path(key.strip().lstrip("./")).name
+        if base in ALLOWED_DOCS:
+            normalised_cited[base] = list(paths)
+    evidence["git_sha"] = head_sha
+    evidence["git_short_sha"] = head_short
+    evidence["generated_at"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    evidence.setdefault("files_cited", {}).update(normalised_cited)
+    evidence_path.write_text(json.dumps(evidence, indent=2) + "\n")
+
+    # Append to changes.md.
+    changes_md = root / "notes" / "changes.md"
+    if changes_md.parent.exists():
+        line = (
+            f"\n## {today} — repo-map refresh (from cache)\n"
+            f"**Agent:** repo_map_refresh (cached response replay)\n"
+            f"**Action:** {plan.changes_md_line or 'replay of saved agent output'}\n"
+            f"**Updated docs:** {', '.join(applied) or '(none)'}\n"
+            f"**Verified against:** `{head_short}`\n"
+        )
+        with changes_md.open("a") as f:
+            f.write(line)
+
+    # Post-write Tier-1 verification.
+    check_script = root / "scripts" / "check-repo-map.sh"
+    clean = True
+    if check_script.exists():
+        res = subprocess.run(
+            ["bash", str(check_script)], capture_output=True, text=True
+        )
+        clean = "STALE" not in (res.stderr + res.stdout)
+
+    return {
+        "status": "refreshed",
+        "last_sha": last_sha,
+        "head_sha": head_sha,
+        "applied": applied,
+        "unchanged": plan.docs_unchanged,
+        "post_check_clean": clean,
+    }
