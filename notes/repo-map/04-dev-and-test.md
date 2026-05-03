@@ -37,6 +37,17 @@ uv run run-workflow daily_db_report
 
 This path is **not yet verified end-to-end** — see `tickets.json` TICKET-3 (P1, todo).
 
+## Run `repo-map` agent workflows
+
+This invokes the `agent-workflows/scripts/agent_refresh.py` CLI via the top-level `Makefile` targets:
+
+```bash
+# from repo root
+make repo-map-check            # detect staleness, no LLM call
+make repo-map-status           # show detailed diff (requires LLM)
+make repo-map-refresh          # generate & apply patches (requires LLM)
+```
+
 ## Tests
 
 ```bash
@@ -54,3 +65,8 @@ The root `zefflow` package has **no tests**.
 - Mac users wanting native Metal Ollama: set `OLLAMA_HOST=host.docker.internal:11434` in `.env` for n8n, and don't start the in-container `ollama` service.
 - `N8N_ENCRYPTION_KEY` must be ≥32 chars and stable — changing it invalidates stored credentials.
 - The two Python packages have separate `uv` projects. Activating the root `.venv` does **not** install `agent-workflows` deps; `cd agent-workflows && uv sync` is required.
+- The `agent-workflows` package's `Settings` object is now lazy-loaded, allowing no-LLM `agent-refresh` commands (like `check` or `status`) to run without `GOOGLE_API_KEY` being present in the environment.
+
+
+---
+*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

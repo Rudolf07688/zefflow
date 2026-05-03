@@ -56,3 +56,7 @@
 - [ ] Add the Rails Postgres connection target (env, n8n credential, or a SQLAlchemy URL).
 - [ ] Pin `agno` and `n8nio/n8n` images.
 - [ ] Either fill `infra/Dockerfile` or remove it.
+
+
+---
+*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

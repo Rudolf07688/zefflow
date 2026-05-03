@@ -45,5 +45,39 @@ class Settings(BaseSettings):
         return self
 
 
-# Singleton — import this everywhere instead of re-instantiating.
-settings = Settings()  # type: ignore[call-arg]
+# Lazy singleton — instantiating Settings validates credentials, so we defer
+# until first use. This keeps no-LLM entrypoints (e.g. `agent-refresh check`)
+# importable without GOOGLE_API_KEY.
+class _LazySettings:
+    """Defer Settings() until first attribute access.
+
+    If credentials are missing (e.g. running a no-LLM CLI subcommand without
+    GOOGLE_API_KEY), fall back to a minimally-initialised Settings via
+    `model_construct`, which skips validators. The Gemini factory in `llm.py`
+    will still raise on first real use.
+    """
+
+    _instance: Settings | None = None
+
+    def _resolve(self) -> Settings:
+        if _LazySettings._instance is not None:
+            return _LazySettings._instance
+        try:
+            _LazySettings._instance = Settings()  # type: ignore[call-arg]
+        except Exception:  # validation failure (e.g. no GOOGLE_API_KEY)
+            _LazySettings._instance = Settings.model_construct(
+                llm_provider="gemini",
+                default_model="gemini-2.5-flash",
+                google_api_key=None,
+                google_cloud_project=None,
+                google_cloud_location="us-central1",
+                database_url="sqlite:///./dev.db",
+                log_level="INFO",
+            )
+        return _LazySettings._instance
+
+    def __getattr__(self, name: str):  # type: ignore[no-untyped-def]
+        return getattr(self._resolve(), name)
+
+
+settings = _LazySettings()  # type: ignore[assignment]

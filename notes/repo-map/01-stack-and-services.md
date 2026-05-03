@@ -47,3 +47,7 @@ The currently-exported demo workflow already embodies this pattern in miniature:
 - [infra/Dockerfile](../../infra/Dockerfile) is **empty** — nothing builds from `infra/` yet.
 - `./shared` is empty.
 - The single n8n export is a demo; [notes/n8n-workflows.md](../n8n-workflows.md) explicitly says no real workflows exist.
+
+
+---
+*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

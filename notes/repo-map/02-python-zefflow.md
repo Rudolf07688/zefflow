@@ -36,3 +36,7 @@ Declared under `[project.scripts]`:
 - Connect to a Rails DB.
 - Run any agent or LLM call.
 - Reference the `agent-workflows` package in any way.
+
+
+---
+*Last verified against commit `6319dfb` on 2026-05-03. Run `make repo-map-check` to detect drift; `make repo-map-rebuild` for a full refresh.*

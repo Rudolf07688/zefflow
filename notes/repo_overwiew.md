@@ -23,12 +23,25 @@ status: methodology spec — manual dry run before building the agent
 
 ## Phases & Steps
 
+### Phase 0 — Ground truth (do this first, every time)
+
+> Distrust any tree the IDE/host gives you. Establish ground truth from the
+> filesystem and git, not from supplied summaries.
+
+0a. `tree -L 4 --gitignore -a -I '.git|.venv|node_modules|__pycache__|dist|build|.next|.DS_Store|*.egg-info'` — canonical structural source of truth.
+0b. `git status --short` and `git log -1 --stat` — detect uncommitted refactors and recent activity. Large moves/deletes ⇒ any pre-supplied tree is stale.
+0c. `git ls-files | awk -F/ '{print $1}' | sort | uniq -c | sort -rn` — tracked-file weight per top-level dir.
+
 ### Phase 1 — Orient (breadth, no detail)
 
-1. Tree the repo to a sensible depth; capture top-level files and folder names only.
-2. Read all "manifest" files: every `pyproject.toml`, `docker-compose.yml`, `infra/Dockerfile`, root `README.md`, `GENERAL.md`, `CLAUDE.md.bak`, every file in `notes/`.
-3. From manifests, derive: language(s), package manager, declared scripts/entrypoints, services, load-bearing deps.
-4. **Write a pre-drill hypothesis** of the project (3–5 sentences) before reading any source. Keep for later comparison — comparing pre vs post is what makes the agent better than a human skim.
+1. Read all manifest files: every `pyproject.toml` / `package.json` / `Cargo.toml`, `docker-compose.yml`, `Dockerfile`s, root `README.md`, `GENERAL.md` / `AGENTS.md` / `CLAUDE.md`, every file in `notes/` or `docs/`.
+2. **`.env` policy:** never read `.env`. `.env.example` is permitted but weighted at ~80% certainty — keys may have been added/removed/renamed since. Cite anything from it as "per `.env.example`" so the reader can re-verify.
+3. From manifests, derive language(s), package manager, declared entrypoints, services, load-bearing deps.
+4. Write a 3–5-sentence **pre-drill hypothesis** before reading any source. Keep for comparison.
+
+**Default audience: a developer being onboarded to the repo.** Optimise for "what do I need to understand to make my first useful change," not "what would impress a reviewer." Switch audience only when explicitly told.
+
+**Trajectory artefacts (`tickets.json`, `TODO.md`, `ROADMAP.md`) are read but down-weighted.** Treat them as "what someone wrote down once," not as fact — they are routinely out of date. **Citation hierarchy when claims conflict: commit history > working code > config/manifests > READMEs > tickets/TODOs/roadmap docs.** If a trajectory artefact is the *only* source for a claim, mark it as a guess.
 
 ### Phase 2 — Drill (depth on the spine)
 
@@ -74,6 +87,25 @@ status: methodology spec — manual dry run before building the agent
 15. Re-read each file as the owner; replace vague/inferred claims with file-referenced facts or move them to `05-open-questions.md`.
 16. Verify every path, symbol, and command actually exists / runs (`ls`, `--help`).
 17. Produce the **agent-design debrief** — heuristics the real agent should encode. This is the primary takeaway from the exercise.
+18. **Emit `notes/repo-map/.evidence.json`.** Every output run records the git SHA, timestamp, and the list of files cited per output doc. This is the contract downstream tooling uses to detect staleness without an LLM:
+
+    ```json
+    {
+      "git_sha": "<HEAD sha at run time>",
+      "generated_at": "<ISO-8601 UTC>",
+      "files_cited": {
+        "00-overview.md": ["docker-compose.yml", "src/zefflow/scripts/db_utils.py", "..."],
+        "03-python-agent-workflows.md": ["..."]
+      }
+    }
+    ```
+
+    Each output doc also gets a footer:
+
+    ```markdown
+    ---
+    *Last verified against commit `<short_sha>` on `<YYYY-MM-DD>`. Run `make repo-map` after changes to manifests, entrypoints, or top-level structure.*
+    ```
 
 ---
 
@@ -87,6 +119,9 @@ status: methodology spec — manual dry run before building the agent
 - **Reviewer audience ⇒ flag, don't paper over.** Better to surface a suspicious entry (e.g. a typo'd package path) than to omit it.
 - **Diagrams replace prose only where structure > narrative.** Architecture and data flow yes; per-function detail no.
 - **Empty / early-stage repos: say so, then guess the trajectory.** If most directories are empty, scaffolds, or `TODO`s, do not pretend the repo does more than it does. Explicitly flag it as early-stage / scaffold and make an **informed guess** at where the devs are heading, grounded in the strongest signals available (README aspirations, ticket/issue files, commit messages, dependency choices, naming, existing scaffolds). Mark every such guess as a guess and cite the signal that prompted it.
+- **Distrust pre-supplied trees.** Always re-derive structure from `tree --gitignore` + `git ls-files` + `git status`. The IDE-supplied workspace tree can be stale.
+- **Never read `.env`.** `.env.example` only, marked as ~80% accurate.
+- **Trajectory artefacts are signals, not facts.** Down-weight `tickets.json`, `TODO.md`, `ROADMAP.md`. Commit history and working code beat them every time.
 
 ---
 
@@ -94,7 +129,7 @@ status: methodology spec — manual dry run before building the agent
 
 **In:** documentation pass into `notes/repo-map/`, with diagrams + method debrief.
 
-**Out (deliberately):** building the agent, modifying source, running tests that mutate state, touching `.env` or live services, running `compose up`.
+**Out (deliberately):** building the agent, modifying source, running tests that mutate state, **reading `.env`**, running `compose up`.
 
 ---
 
@@ -112,11 +147,12 @@ status: methodology spec — manual dry run before building the agent
 
 | Question | Decision |
 |---|---|
-| Output shape | Multi-file under `notes/repo-map/` |
-| Audience | Project owner / reviewer doing a sanity check |
+| Output shape | Multi-file under `notes/repo-map/` + `.evidence.json` |
+| Audience (default) | Developer being onboarded |
 | Depth | Medium — manifests + entrypoints + dep cross-check |
-| Tooling | Full shell allowed, read-only (incl. tests/linters; no writes) |
+| Tooling | Full shell allowed, read-only (no `.env`, no writes, no `compose up`) |
 | Diagrams | Architecture (required), directory→responsibility, data flow |
+| Freshness | Pre-commit hook detects, human triggers refresh; `.evidence.json` is the contract |
 
 ---
 

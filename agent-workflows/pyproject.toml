@@ -20,6 +20,7 @@ dependencies = [
 [project.scripts]
 run-workflow = "scripts.run_workflow:app"
 seed-db = "scripts.seed_db:app"
+agent-refresh = "scripts.agent_refresh:app"
 
 [dependency-groups]
 dev = [
@@ -34,7 +35,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agent_workflows"]
+packages = ["src/agent_workflows", "scripts"]
 
 [tool.ruff]
 line-length = 100
